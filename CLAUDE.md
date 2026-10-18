@@ -24,28 +24,83 @@ against a live data environment for a hypothetical company, while Claude teaches
 - If a lesson needs company context, such as contracts, a care team or a KPI target, invent it consistently and
   record it in `company/` so later lessons reuse the same facts.
 
-## The data environment
+## The data environment: DuckDB in the repo (default), Databricks (optional)
 
-Lessons query the Databricks lakehouse built by the companion repo **`databricks-learning`**: AWS us-west-2,
-Unity Catalog, serverless. This repo never builds infrastructure. It only reads the environment, plus a personal
-scratch schema.
+Learners shouldn't need a cloud account. Halcyon's data **ships inside this repo** as small Parquet snapshots, and a
+local **DuckDB** database is built from them. Clone, build, query; it's free and runs offline.
 
-| Layer | Where | Used by |
+```
+ databricks-learning (builds and validates the data)        knowledge-builder (this repo, public)
+ ───────────────────────────────────────────────────        ──────────────────────────────────────────────
+ lab_prod.<source>_bronze / silver / gold / observation ──▶ data/<layer>/<table>.parquet  (committed snapshot)
+            export snapshot (scripts/export_snapshot)                │  uv run kb build-db
+                                                                     ▼
+                                                            halcyon.duckdb  (local, gitignored)
+                                                                     │  Claude + learner query it
+                                                                     ▼
+                                                            lessons · checks · knowledge/
+```
+
+### Backends
+
+| Backend | Who it's for | Used by |
 |---|---|---|
-| Raw files | `lab_prod.landing` (volumes, one per source) | databricks-intro (ingestion lessons) |
-| Bronze | `lab_prod.<source_id>_bronze.*` (one schema per source, plus `_quarantine` tables) | databricks-intro, claims (source-variation lessons) |
-| Silver | `lab_prod.silver` (`stg_*` per source, `int_*` unioned and conformed) | claims analytics |
-| Gold | `lab_prod.gold` (`eligibility`, `member_months`, `medical_claim`, `pharmacy_claim`, …) | claims analytics |
-| Observation | `lab_prod.observation` (pipeline health, data-quality results) | databricks-intro |
-| Scratch | `lab_dev.learn_<user>` | Learner exercises that create objects |
+| **DuckDB** (default) | Anyone who clones the repo. No account, no cost. | All of `claims-data-analytics`, and the concept parts of `databricks-intro` |
+| **Databricks** (optional) | Learners with a workspace: [Free Edition](https://www.databricks.com/learn/free-edition) or a trial | The platform-specific `databricks-intro` lessons (volumes, Auto Loader, pipelines, jobs, Unity Catalog grants). Learners load the same Parquet snapshot into their own workspace. |
 
-- **Read-only outside scratch.** Learners `SELECT` from `lab_prod`. Anything they `CREATE` goes in `lab_dev.learn_<user>`.
-- **Before the environment exists,** early databricks-intro lessons run in a sandbox: the `workspace` catalog,
-  `workspace.sandbox` schema, with files uploaded to a managed volume.
-- **Each lesson declares the tables it needs** (`requires_tables`). If they don't exist yet, say which
-  `databricks-learning` phase builds them and offer the sandbox alternative.
-- **Cost:** every SQL query wakes the warehouse, which bills DBUs. Keep exercise queries scoped (filters, `LIMIT`)
-  and follow the environment's budget rules (`databricks-learning` → `/cost-check`).
+Each lesson's frontmatter declares `backend: duckdb | databricks | both`. For `both`, the lesson shows the DuckDB
+query and the Databricks equivalent side by side, which teaches the dialect differences too.
+
+### Database layout (DuckDB mirrors the lakehouse schemas)
+
+| DuckDB schema | Mirrors | Holds |
+|---|---|---|
+| `raw` | `landing` volumes | Sample raw files per source (`data/raw/<source_id>/…`), queried with `read_csv` / `read_parquet` |
+| `source_a_bronze`, `source_b_bronze`, `source_c_bronze` | `<source_id>_bronze` | Each payer's data as delivered, plus `_quarantine` tables |
+| `silver` | `silver` | `stg_*` per source, `int_*` unioned and conformed |
+| `gold` | `gold` | `eligibility`, `member_months`, `medical_claim`, `pharmacy_claim`, utilization marts |
+| `observation` | `observation` | Pipeline health and data-quality results captured at export time |
+| `reference` | seeds | Code sets: ICD-10-CM, HCPCS, revenue codes, POS, HCC mappings (public sources only) |
+| `learn` | `lab_dev.learn_<user>` | **The learner's scratch schema.** The only place exercises create objects. |
+
+- `halcyon.duckdb` is **built, never committed**: `uv run kb build-db` creates the schemas and loads or views the
+  Parquet files. Rebuilding resets everything except `learn` (unless `--reset-learn`).
+- **Snapshots are versioned** (`data/VERSION`, `data/manifest.yml`: table, layer, row count, checksum). Lessons and
+  checks are written against a snapshot version, so answers stay stable.
+- **Size budget:** the whole `data/` folder stays well under GitHub limits (target under 50 MB). That means small
+  member counts per source, Parquet with zstd compression, and samples rather than full raw history.
+- **Answer keys stay out of `data/`.** Things like the generator's seeded-defect manifest live with the lesson
+  `checks/`, so a learner browsing tables doesn't find the answers.
+
+### Query knowledge (`knowledge/`): what Claude reads before writing SQL
+
+| File | Purpose |
+|---|---|
+| `knowledge/tables/<schema>.<table>.md` | One per table: grain, primary key, columns with meaning, joins, known quirks per source |
+| `knowledge/glossary.md` | Business terms → SQL predicates (member month, paid date, ED visit, readmission, …) |
+| `knowledge/example-queries/*.sql` | Validated queries with the question they answer and the expected row count |
+| `knowledge/sources.md` | How each payer's feed differs (layout, cadence, codes, known defects at a high level) |
+
+**Rule for Claude: open the relevant `knowledge/tables/*.md` before writing a query.** Never guess column names.
+If a table's doc and the actual columns disagree, trust the database (`DESCRIBE`) and flag the doc for fixing.
+
+### How Claude and the learner run queries
+
+- **Learner:** `uv run kb sql` opens an interactive shell on `halcyon.duckdb`. `uv run kb sql -c "SELECT …"` runs one
+  query. The DuckDB CLI (`duckdb halcyon.duckdb`) works too, if it's installed.
+- **Claude:** the same `uv run kb sql -c …`, opened **read-only** for everything except the `learn` schema. Or use a
+  DuckDB MCP server configured in `.mcp.json` against the local file in read-only mode.
+- **Databricks backend:** a `lab` CLI profile and the SQL Editor, as in `databricks-learning`. Queries there bill the
+  warehouse, so keep them scoped.
+
+### Data rules
+
+- Synthetic only. Snapshots come from the `databricks-learning` pipeline, which is built on public synthetic
+  generators (CMS synthetic claims, Tuva's generator, Synthea). Reference code sets come only from public sources
+  with redistributable licenses. Note each license in `data/manifest.yml`.
+- Learners `SELECT` from every schema and `CREATE` only in `learn`.
+- **Until the first snapshot exists**, lessons say so and point to the `databricks-learning` phase that produces
+  the tables.
 
 ## How Claude teaches here
 
@@ -73,7 +128,13 @@ Learner-run vs Claude-run:
 knowledge-builder/
 ├── README.md
 ├── CLAUDE.md
+├── pyproject.toml / uv.lock         # uv project: duckdb, the `kb` CLI (build-db, sql)
 ├── company/                        # Halcyon Health facts reused across lessons (payers, contracts, KPIs)
+├── data/                           # committed Parquet snapshot: raw/, <source>_bronze/, silver/, gold/,
+│   ├── VERSION                     #   observation/, reference/   (+ manifest.yml with rows, checksums, licenses)
+│   └── manifest.yml
+├── knowledge/                      # query knowledge: tables/*.md, glossary.md, example-queries/, sources.md
+├── kb/                             # tiny CLI: build-db (Parquet → halcyon.duckdb), sql (read-only shell)
 ├── modules/
 │   ├── databricks-intro/
 │   │   ├── README.md               # module overview, prerequisites, lesson index
@@ -96,8 +157,9 @@ module: claims-data-analytics
 title: Adjustments, denials and reversals
 duration: 45m
 prerequisites: [claims-03, claims-04]
-requires_tables: [lab_prod.source_b_bronze.medical, lab_prod.silver.int_claim_adjustments]
-warehouse: true            # does this lesson run SQL on the warehouse?
+backend: duckdb            # duckdb | databricks | both
+requires_tables: [source_b_bronze.medical, silver.int_claim_adjustments]
+snapshot: ">=0.1"          # data snapshot version the lesson and its checks are written against
 sources:
   - https://thetuvaproject.com/claims-data-analytics/data-sources/claims-data/adjustments-denials-reversals
 ---
@@ -185,7 +247,7 @@ resolves them.
 ## Repo rules
 
 - Synthetic data only. No PHI, no real company names or data, no real people.
-- No secrets, account IDs, workspace URLs or machine-specific paths in tracked files. Each learner uses their own
-  Databricks CLI profile (default name `lab`).
-- `progress/` is personal and gitignored.
+- No secrets, account IDs, workspace URLs or machine-specific paths in tracked files. Databricks learners use their
+  own CLI profile (default name `lab`).
+- `progress/` and `halcyon.duckdb` are personal and gitignored.
 - README and CLAUDE.md describe the repo as it is, in present tense.

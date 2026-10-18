@@ -11,8 +11,8 @@ including how three payers deliver the "same" data differently.
 |---|---|
 | **Audience** | Analysts and engineers new to claims data, or experienced ones who want a structured refresher |
 | **Time** | 17 lessons of 30–60 minutes each |
-| **You'll use** | SQL on Databricks (SQL Editor or CLI) |
-| **Data** | `lab_prod.<source>_bronze`, `lab_prod.silver`, `lab_prod.gold` |
+| **You'll use** | SQL on the local DuckDB database (`uv run kb sql`); no cloud account needed |
+| **Data** | `source_*_bronze`, `silver`, `gold`, `reference` in `halcyon.duckdb` |
 
 ## Lessons
 

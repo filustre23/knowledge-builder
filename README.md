@@ -24,43 +24,56 @@ The full lesson lists are in [CLAUDE.md](CLAUDE.md#modules).
 
 1. **Open the repo in Claude Code** and start a lesson, e.g. `/start-lesson claims-data-analytics 05`.
 2. **Claude explains the concept** briefly and shows where it appears in Halcyon's data.
-3. **You do the exercise:** run the CLI command or SQL yourself and paste the result back.
+3. **You do the exercise:** run the SQL (`uv run kb sql`) or CLI command yourself and paste the result back.
 4. **Claude verifies it** against the lesson's check queries and explains what's right or off.
 5. **Hints, not answers:** stuck? `/hint` walks a ladder from a nudge to a partial query to the full solution.
 6. **Wrap up** with a short quiz. Your progress is logged locally.
 
-## The data environment
+## The data: it ships with the repo
 
-Lessons query a Databricks lakehouse (AWS, Unity Catalog, serverless) built by the companion repo
-**`databricks-learning`**:
+No cloud account needed. Halcyon's data is committed as small Parquet snapshots, and a local
+[DuckDB](https://duckdb.org) database is built from them in seconds:
 
-| Layer | What it holds |
+```
+data/<layer>/<table>.parquet  ──▶  uv run kb build-db  ──▶  halcyon.duckdb  ──▶  you + Claude query it
+```
+
+| Schema | What it holds |
 |---|---|
-| `landing` | Raw payer files, one volume per source |
-| `<source>_bronze` | Each payer's data as delivered, one schema per source |
+| `raw` | Sample raw payer files, exactly as delivered (pipe-delimited, CSV.gz, Parquet) |
+| `source_a_bronze` · `source_b_bronze` · `source_c_bronze` | Each payer's data as delivered, one schema per source |
 | `silver` | The three payers cleaned, conformed and unioned |
 | `gold` | Analytics-ready marts: eligibility, member months, medical and pharmacy claims |
 | `observation` | Pipeline health and data-quality results |
+| `reference` | Public code sets: ICD-10-CM, HCPCS, revenue codes, place of service |
+| `learn` | **Your scratch space.** Create anything you like here. |
 
-Learners read from the shared environment and create their own objects in a personal scratch schema.
+Every table is documented in [`knowledge/`](knowledge/) (grain, keys, columns, quirks per payer), so Claude can
+write and check queries accurately.
+
+**Have a Databricks workspace?** The platform lessons in `databricks-intro` (volumes, Auto Loader, pipelines, jobs,
+governance) can also run on [Databricks Free Edition](https://www.databricks.com/learn/free-edition), loading the
+same snapshot. The data snapshots are produced by a Databricks lakehouse pipeline built in a companion project.
 
 ## Getting started
 
 **Prerequisites:**
 - [Claude Code](https://claude.com/claude-code)
-- The [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/), authenticated to the lab workspace as profile `lab`
-- Read access to the `databricks-learning` environment
+- [uv](https://docs.astral.sh/uv/)
 
 ```bash
 git clone https://github.com/filustre23/knowledge-builder.git
 cd knowledge-builder
-claude
+uv sync                 # installs DuckDB and the kb CLI
+uv run kb build-db      # builds halcyon.duckdb from data/
+claude                  # then: /start-lesson claims-data-analytics 01
 ```
 
-Then ask Claude to start the first lesson of a module.
+> **Status:** the modules and lesson outlines are in place. The data snapshot, the `kb` CLI and the lesson files
+> are being built. Until the first snapshot lands, the commands above won't run yet.
 
 ## Ground rules
 
 - **Synthetic data only:** no PHI, no real people, no real company data.
 - **You run the commands;** Claude teaches and checks.
-- **Mind the cost:** queries run on a shared SQL warehouse, so keep them scoped.
+- **Local first:** DuckDB lessons are free and offline. On Databricks, keep queries scoped, because the warehouse bills while it runs.

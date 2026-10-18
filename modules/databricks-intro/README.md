@@ -38,7 +38,12 @@
 | 14 | Cost | Warehouses, serverless, DBUs, `system.billing.usage`, budgets |
 | 15 | Consumption | AI/BI dashboards, Genie, SQL Alerts |
 
-Lessons 01–06 run in a sandbox (`workspace.sandbox`) and need nothing pre-built. Later lessons use the
-`lab_*` environment as it gets built.
+**Where lessons run:**
+- **Platform lessons** (volumes, Auto Loader, pipelines, jobs, Unity Catalog) need a Databricks workspace.
+  [Free Edition](https://www.databricks.com/learn/free-edition) works: you load the repo's data snapshot into it.
+- **Concept lessons** (exploring raw files, medallion design, dbt modeling, observation, cost reasoning) also run
+  locally on DuckDB, with the Databricks SQL shown side by side.
+
+Each lesson's frontmatter says which (`backend: duckdb | databricks | both`).
 
 > Status: lesson files are being written. This index is the agreed outline.
