@@ -1,0 +1,38 @@
+name: Propose a module
+description: Suggest a new topic to learn on Halcyon Health's data
+title: "[Module] "
+labels: ["proposal", "module"]
+body:
+  - type: input
+    id: topic
+    attributes:
+      label: Topic
+      description: What would this module teach?
+      placeholder: e.g. dbt fundamentals, healthcare code sets, Terraform for data platforms
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Who is it for, and why learn it on enterprise data?
+      description: Who would take this module, and what does the company's data make clearer than a toy example?
+    validations:
+      required: true
+  - type: textarea
+    id: lessons
+    attributes:
+      label: Lesson outline
+      description: A rough list of lessons, one per line. It doesn't need to be complete.
+      placeholder: |
+        01 ...
+        02 ...
+  - type: textarea
+    id: data
+    attributes:
+      label: Data and context it would use
+      description: Tables, documentation, MCP servers or APIs the lessons would draw on (if you know).
+  - type: textarea
+    id: sources
+    attributes:
+      label: Reference material
+      description: Books, docs or courses the concepts would follow (links).

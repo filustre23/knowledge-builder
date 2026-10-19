@@ -1,0 +1,39 @@
+name: Propose a lesson
+description: Suggest a new lesson, or a change to one, in an existing module
+title: "[Lesson] "
+labels: ["proposal", "lesson"]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - databricks-intro
+        - claims-data-analytics
+        - Other / new module
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: Lesson title
+      placeholder: e.g. Claims lag triangles
+    validations:
+      required: true
+  - type: textarea
+    id: concept
+    attributes:
+      label: Concept and learning goal
+      description: What should a learner understand or be able to do afterward?
+    validations:
+      required: true
+  - type: textarea
+    id: exercise
+    attributes:
+      label: Exercise idea
+      description: What would the learner run or query on Halcyon's data, and how would you check it?
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this lesson (or change)?
+      description: A gap you hit, a question that kept coming up, a better ordering, etc.
