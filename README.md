@@ -34,7 +34,7 @@ Details are in [CLAUDE.md](CLAUDE.md).
 
 Anyone can suggest what to learn next:
 
-- **[Propose a module](../../issues/new?template=propose-module.yml):** a new topic
-- **[Propose a lesson](../../issues/new?template=propose-lesson.yml):** a new lesson, or a change to an existing one
+- **[Propose a module](https://github.com/filustre23/knowledge-builder/issues/new?template=propose-module.yml):** a new topic
+- **[Propose a lesson](https://github.com/filustre23/knowledge-builder/issues/new?template=propose-lesson.yml):** a new lesson, or a change to an existing one
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how proposals become lessons.

@@ -6,8 +6,8 @@ Anyone can propose a module or a lesson.
 
 Open an issue with one of the forms:
 
-- **[Propose a module](../../issues/new?template=propose-module.yml):** a new topic to learn on Halcyon Health's data
-- **[Propose a lesson](../../issues/new?template=propose-lesson.yml):** a new lesson, or a change to an existing one
+- **[Propose a module](https://github.com/filustre23/knowledge-builder/issues/new?template=propose-module.yml):** a new topic to learn on Halcyon Health's data
+- **[Propose a lesson](https://github.com/filustre23/knowledge-builder/issues/new?template=propose-lesson.yml):** a new lesson, or a change to an existing one
 
 Rough ideas are welcome. An outline and a sentence on why it's worth learning on enterprise data is enough to start
 the conversation.
