@@ -15,5 +15,17 @@ use on the job, through **MCP servers and API connections**:
 
 You run the exercises yourself. Claude explains, connects the concept to the enterprise context, and checks your work.
 
+```mermaid
+flowchart LR
+    L([You]) -- "start a lesson,<br/>run the exercise" --> C{{Claude}}
+    M[[Lesson<br/>concept + exercise]] --> C
+
+    C <-- "MCP / API:<br/>query" --> D[(Company data<br/>DuckDB · Databricks)]
+    C <-- "MCP / API:<br/>read" --> K[/Documentation<br/>data dictionary · platform docs/]
+    C <-- "MCP / API:<br/>git log" --> G[/Repo history<br/>why pipelines look this way/]
+
+    C -- "the concept, in enterprise context<br/>+ your work, checked" --> L
+```
+
 **Modules:** [`databricks-intro`](modules/databricks-intro/) · [`claims-data-analytics`](modules/claims-data-analytics/).
 Details are in [CLAUDE.md](CLAUDE.md).
