@@ -27,6 +27,27 @@ flowchart LR
     C -- "the concept, in enterprise context<br/>+ your work, checked" --> L
 ```
 
+## Knowledge that stays current
+
+A **weekly sweeper agent** scans what changed (the data, the docs, the code history and the reference material) and
+proposes updates to a shared **knowledge base**. Lessons draw on the knowledge base instead of hard-coding facts, so
+every lesson teaches with the latest context. A person reviews and merges every change.
+
+```mermaid
+flowchart LR
+    S{{Weekly sweeper agent}}
+    D[(Data environment<br/>new tables · schema changes)] --> S
+    G[/Repo git history<br/>pipeline & model changes/] --> S
+    R[/Docs & references<br/>platform releases · books/] --> S
+
+    S -- "pull request:<br/>updates + stale-lesson report" --> P{Human review}
+    P -- merge --> KB[(Knowledge base<br/>knowledge/ + search index)]
+
+    KB --> L1[[Lessons]]
+    KB --> T{{AI tutor}}
+    L1 --> T
+```
+
 ## Who it's for and how it runs
 
 - **For every role.** **Hands-on** learners run the SQL and CLI themselves. **Guided** learners ask questions in plain

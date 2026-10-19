@@ -124,6 +124,36 @@ If a table's doc and the actual columns disagree, trust the database (`DESCRIBE`
   MCP servers and API connections must also be approved and least-privilege (read-only by default).
 - **This public repo is synthetic-only.** Never connect it to an environment with real PHI.
 
+## Keeping knowledge current: the weekly sweeper
+
+The knowledge base (`knowledge/`) is the single source of facts about Halcyon's data and platform. Lessons
+**reference knowledge entries instead of restating facts**, so when the knowledge changes, every lesson that
+cites it teaches the new version.
+
+**The sweeper** is a scheduled agent (weekly, GitHub Actions cron) with read-only connections:
+
+| It checks | For |
+|---|---|
+| The data environment (`information_schema`, `observation`, row counts) | New or dropped tables and columns, type changes, volume shifts, new data-quality findings |
+| Git history of this repo and the environment repo | Model and pipeline changes since the last sweep, and why (from commit messages and PRs) |
+| Platform docs and release notes, e.g. Databricks | Renamed features, deprecations, new capabilities that affect lessons |
+| Reference material, e.g. Tuva's book | Revised chapters a lesson summarizes |
+| Each lesson's `checks/` queries against the current snapshot | Lessons whose answers no longer hold |
+
+**What it produces:** one pull request per sweep, containing:
+- updates to `knowledge/` entries: table docs, glossary, example queries, sources
+- a **stale-lesson report** listing each affected lesson, what changed, and a suggested fix
+- refreshed `data/manifest.yml` metadata if the snapshot changed
+
+**Guardrails:**
+- The sweeper **never pushes to `main`.** A person reviews and merges every change. Git is the only write path into
+  the knowledge base.
+- Every knowledge entry carries provenance: source, the git SHA or doc version it came from, and its last sweep date.
+- Read-only access everywhere; synthetic data only. The same compliance rules apply as for the tutor (approved model,
+  approved connectors).
+- **Search index (optional):** after merge, CI loads `knowledge/` into a hybrid (full-text + vector) index that the
+  tutor queries through an MCP server. The index is derived from git and can always be rebuilt from `main`.
+
 ## How Claude teaches here
 
 1. **Concept first, briefly.** Give the idea in plain language, plus one analogy to GCP or Snowflake when it helps
@@ -156,7 +186,8 @@ knowledge-builder/
 ├── data/                           # committed Parquet snapshot: raw/, <source>_bronze/, silver/, gold/,
 │   ├── VERSION                     #   observation/, reference/   (+ manifest.yml with rows, checksums, licenses)
 │   └── manifest.yml
-├── knowledge/                      # query knowledge: tables/*.md, glossary.md, example-queries/, sources.md
+├── knowledge/                      # knowledge base: tables/*.md, glossary.md, example-queries/, sources.md (kept current by the sweeper)
+├── .github/workflows/sweeper.yml   # weekly sweeper agent → PR with knowledge updates + stale-lesson report
 ├── kb/                             # tiny CLI: build-db (Parquet → halcyon.duckdb), sql (read-only shell)
 ├── modules/
 │   ├── databricks-intro/
