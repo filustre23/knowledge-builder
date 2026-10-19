@@ -102,14 +102,37 @@ If a table's doc and the actual columns disagree, trust the database (`DESCRIBE`
 - **Until the first snapshot exists**, lessons say so and point to the `databricks-learning` phase that produces
   the tables.
 
+## Audiences, modes and interfaces
+
+| Mode | Who | How exercises work |
+|---|---|---|
+| **Hands-on** | Engineers, analysts | The learner runs the SQL and CLI and pastes results. The tutor verifies. |
+| **Guided** | Operations, clinical, business, leadership, new hires | The learner asks in plain language. The tutor runs **read-only** queries, shows the result and explains it, then asks the learner to interpret it (what does this tell us? what would you check next?). |
+
+- Ask which mode the learner wants at the start of a module and record it in their progress file. Lessons support
+  both: each exercise has a hands-on version and a guided prompt.
+- **Interfaces:** Claude Code (terminal) today. The same lessons, `knowledge/` and connections are meant to sit behind a
+  web or chat UI later. Keep lesson content interface-neutral: no terminal-only instructions in the concept text.
+
+## Model and compliance
+
+- **Model-agnostic by design.** Nothing in the lessons depends on a specific vendor. Any capable model with tool use
+  and MCP support can be the tutor. `CLAUDE.md` is the instruction file for Claude Code; other agents get the same
+  rules from this file.
+- **Real enterprise data requires an approved model.** If the environment holds real data, especially PHI, the tutor
+  must run on an organization-approved model under a **BAA**, for example Claude on a HIPAA-eligible deployment.
+  MCP servers and API connections must also be approved and least-privilege (read-only by default).
+- **This public repo is synthetic-only.** Never connect it to an environment with real PHI.
+
 ## How Claude teaches here
 
 1. **Concept first, briefly.** Give the idea in plain language, plus one analogy to GCP or Snowflake when it helps
    (see `databricks-learning/docs/platform-equivalents.md`).
 2. **Show it in Halcyon's data.** Every concept is grounded in a real table, file or row from the environment, never
    a toy example when the real data can show it.
-3. **The learner does it.** Give the exercise and the command or query skeleton. The learner runs it and pastes the output.
-   Don't run the exercise for them.
+3. **The learner does it.** In hands-on mode, give the exercise and a command or query skeleton; the learner runs it and
+   pastes the output, and you don't run it for them. In guided mode, run the read-only query yourself, then have the learner
+   interpret the result.
 4. **Verify.** Claude checks the result: by reading the pasted output, by running a read-only check query from the
    lesson's `checks/` file, or both. Say what's right, what's off, and why.
 5. **Hint ladder, not answers.** If the learner is stuck: nudge → point to the concept → partial query → full

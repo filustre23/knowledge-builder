@@ -2,22 +2,22 @@
 
 **Learn a concept by working through it on real-shaped enterprise data, with AI giving you the full picture.**
 
-knowledge-builder is a set of interactive learning modules, such as Databricks or claims data analytics. Each lesson
-pairs a concept with the data of a fictional company, Halcyon Health, which runs a synthetic multi-payer healthcare
-dataset.
+knowledge-builder is a set of interactive learning modules, such as Databricks or claims data analytics, for
+engineers, analysts, operations and business teams. Each lesson pairs a concept with the data of a fictional company,
+Halcyon Health, which runs a synthetic multi-payer healthcare dataset.
 
-You don't just read about a concept. Claude teaches it in context, pulling from the same sources an engineer would
-use on the job, through **MCP servers and API connections**:
+You don't just read about a concept. An **AI tutor** teaches it in context, pulling from the same sources a colleague
+would use on the job, through **MCP servers and API connections**:
 
 - **The data:** it queries the actual tables, so every idea is shown in rows you can inspect
 - **The documentation:** the data dictionary, platform docs and reference material
 - **The repo history:** git commits and changes, to explain *why* the data and pipelines look the way they do
 
-You run the exercises yourself. Claude explains, connects the concept to the enterprise context, and checks your work.
+You do the work. The tutor explains, connects the concept to the enterprise context, and checks your work.
 
 ```mermaid
 flowchart LR
-    L([You]) -- "start a lesson,<br/>run the exercise" --> C{{Claude}}
+    L([You]) -- "start a lesson,<br/>do the exercise" --> C{{AI tutor}}
     M[[Lesson<br/>concept + exercise]] --> C
 
     C <-- "MCP / API:<br/>query" --> D[(Company data<br/>DuckDB · Databricks)]
@@ -26,6 +26,17 @@ flowchart LR
 
     C -- "the concept, in enterprise context<br/>+ your work, checked" --> L
 ```
+
+## Who it's for and how it runs
+
+- **For every role.** **Hands-on** learners run the SQL and CLI themselves. **Guided** learners ask questions in plain
+  language; the tutor runs read-only queries and walks through the results. No code is required.
+- **Any interface.** It runs today in [Claude Code](https://claude.com/claude-code). A web or chat UI can sit in front
+  of it with the same lessons and the same connections.
+- **Not just any AI.** The tutor is model-agnostic and works with any capable model that supports tools and MCP. With
+  **real enterprise data, especially PHI**, use only an organization-approved model under a **Business Associate
+  Agreement (BAA)**, such as Claude on a HIPAA-eligible deployment, with approved connectors only. This public repo
+  uses **synthetic data only**, so no PHI is involved.
 
 **Modules:** [`databricks-intro`](modules/databricks-intro/) · [`claims-data-analytics`](modules/claims-data-analytics/).
 Details are in [CLAUDE.md](CLAUDE.md).
